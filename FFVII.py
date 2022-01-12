@@ -15,6 +15,7 @@ screen_height = 1080
 font = pygame.font.SysFont('Futura', 50)
 
 # Displayer
+pygame.mouse.set_visible(False)
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Final Fantasy VII')
 
@@ -26,6 +27,7 @@ move_left = False
 move_right = False
 moveE_left = False
 moveE_right = False
+GRAVITY = 0.75
 
 # Sprites
 background_img = pygame.image.load('img/Background/bg.png').convert_alpha()
@@ -35,7 +37,7 @@ high_potion_img = pygame.image.load('img/Icons/high_potion.png').convert_alpha()
 sword_img = pygame.image.load('img/Icons/sword.png').convert_alpha()
 restart_img = pygame.image.load('img/Icons/restart.png').convert_alpha()
 victory_img = pygame.image.load('img/Icons/victory.png').convert_alpha()
-exit_img = pygame.image.load('img/Icons/victory.png').convert_alpha()
+exit_img = pygame.image.load('img/exit_btn.png').convert_alpha()
 
 # ColourDefine
 WHITE = (255, 255, 255)
@@ -43,7 +45,6 @@ WHITE = (255, 255, 255)
 
 def draw_bg():
     screen.blit(background_img, (0, 0))
-
 
 # displayering
 
@@ -56,6 +57,7 @@ class Soldier(pygame.sprite.Sprite):
         self.potions = potions
         self.health = health
         self.jump = False
+        self.fire = False
         self.speed = speed
         self.direction = 1
         self.vel_y = 0
@@ -108,16 +110,20 @@ class Soldier(pygame.sprite.Sprite):
             self.direction = 1
 
         if self.jump == True:
-            self.vel_y = -11
+            self.vel_y = -15
             self.jump = False
 
-        self.vel_y += 0.75
+        self.vel_y += GRAVITY
         if self.vel_y > 800:
             self.vel_y
         dy += self.vel_y
 
         if self.rect.bottom + dy > 850:
             dy = 850 - self.rect.bottom
+
+        if self.fire:
+            self.Fire(enemy)
+            self.fire = False
 
         self.rect.x += dx
         self.rect.y += dy
@@ -130,6 +136,7 @@ class Soldier(pygame.sprite.Sprite):
             self.index += 1
         if self.index >= len(self.animationlist[self.action]):
             self.index = 0
+
     def actions(self, new_action):
         if new_action != self.action:
             self.action = new_action
@@ -146,7 +153,6 @@ class Soldier(pygame.sprite.Sprite):
     def moveE(self, moveE_left, moveE_right):
         dx = 0
         dy = 0
-
         if moveE_left:
             dx = -self.speed
             self.flip = False
@@ -155,6 +161,22 @@ class Soldier(pygame.sprite.Sprite):
             dx = self.speed
             self.flip = True
             self.direction = -1
+
+        if self.jump == True:
+            self.vel_y = -15
+            self.jump = False
+
+        self.vel_y += GRAVITY
+        if self.vel_y > 800:
+            self.vel_y
+        dy += self.vel_y
+
+        if self.rect.bottom + dy > 850:
+            dy = 850 - self.rect.bottom
+
+        if self.fire:
+            self.Fire(player)
+            self.fire = False
 
         self.rect.x += dx
         self.rect.y += dy
@@ -168,15 +190,14 @@ potion_button = button.Button(260, 520, potion_img, 1)
 mpotion_button = button.Button(330, 520, medium_potion_img, 1)
 hpotion_button = button.Button(400, 520, high_potion_img, 1)
 attack_button = button.Button(500, 520, sword_img, 1.5)
-restart_button = button.Button(700, 300, restart_img, 2)
-exit_button = button.Button(700, 600, exit_img, 2)
+restart_button = button.Button(660, 300, restart_img, 2)
+exit_button = button.Button(730, 600, exit_img, 2)
 
 # Variables
 # player
 player = Soldier('Hero', 400, 800, 3, 5, 10, 100)
 # Enemy
 enemy = Soldier('Villian', 1450, 800, 3, 5, 10, 100)
-
 run = True
 while run:
 
@@ -186,7 +207,6 @@ while run:
     enemy.animation()
     player.draw()
     enemy.draw()
-
     # GameLogic
     # health system
     if enemy.health <= 0:
@@ -208,6 +228,8 @@ while run:
             player.potions = 10
             enemy.potions = 10
             enemy.alive = True
+        if exit_button.draw(screen):
+            run = False
         else:
             player.actions(3)
     if player.health <= 0:
@@ -223,21 +245,23 @@ while run:
             player.potions = 10
             enemy.potions = 10
             player.alive = True
+        if exit_button.draw(screen):
+            run = False
     # potions
     if player.potions <= 0:
         player.potions = 0
 
-    #PlayerMovement
+    # PlayerMovement
     if player.alive:
         if move_left or move_right:
+            player.move(move_left, move_right)
             player.actions(1)
         else:
             player.actions(0)
-        player.move(move_left, move_right)
     else:
         player.actions(3)
 
-    #EnemyMovement
+    # EnemyMovement
     if enemy.alive:
         if enemy.jump:
             enemy.actions(2)
@@ -249,7 +273,7 @@ while run:
     else:
         enemy.actions(3)
 
-    #Scoreboard
+    # Scoreboard
     if player.score != 0 or enemy.score != 0:
         if enemy.score + player.score == 5:
             if enemy.score > player.score:
@@ -257,7 +281,8 @@ while run:
             if enemy.score < player.score:
                 enemy.draw_text(f'Hero won againt the Villian', pygame.font.SysFont('Palatino', 80), WHITE, 600, 310)
             if enemy.score == player.score:
-                enemy.draw_text(f'Villian and Hero have a draw match', pygame.font.SysFont('Palatino', 80), WHITE, 600, 310)
+                enemy.draw_text(f'Villian and Hero have a draw match', pygame.font.SysFont('Palatino', 80), WHITE, 600,
+                                310)
 
     # Drawing buttons
     if potion_button.draw(screen):
@@ -288,6 +313,8 @@ while run:
             run = False
         # keyboard presses
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                run = False
             if event.key == pygame.K_a:
                 move_left = True
             if event.key == pygame.K_d:
@@ -296,18 +323,24 @@ while run:
                 moveE_left = True
             if event.key == pygame.K_RIGHT:
                 moveE_right = True
-            if event.key == pygame.K_ESCAPE:
-                run = False
-            if event.key == pygame.MOUSEBUTTONDOWN and event.button == 1:#fire to enemy
-                player.Fire(enemy)
-            if event.key == pygame.K_w and player.alive:#player jump
+            if event.key == pygame.K_LCTRL:
+                pygame.mouse.set_visible(True)
+            if event.key == pygame.K_w and player.alive and player.jump == False and player.vel_y > 10:  # player jump
                 player.jump = True
-            if event.key == pygame.K_RETURN and enemy.alive:#fire to player
-                enemy.Fire(player)
-            if event.key == pygame.K_UP and enemy.alive:
+            if event.key == pygame.K_RETURN and enemy.alive:  # fire to player
+                enemy.fire = True
+            if event.key == pygame.K_UP and enemy.alive and enemy.jump == False and enemy.vel_y > 10: # enemy jump
                 enemy.jump = True
+            if event.key == pygame.MOUSEBUTTONDOWN:   # fire to enemy
+                if event.button == 1:
+                    if enemy.alive and player.alive: # fire to enemy
+                        player.fire = True
         # keyboard button released
         if event.type == pygame.KEYUP:
+            if event.key == pygame.K_w and player.jump == True:
+                player.jump = False
+            if event.key == pygame.K_UP and enemy.jump == True:  # enemy jump
+                enemy.jump = False
             if event.key == pygame.K_a:
                 move_left = False
             if event.key == pygame.K_d:
@@ -318,6 +351,11 @@ while run:
                 moveE_right = False
             if event.key == pygame.K_SPACE:
                 player.jump = False
+            if event.key == pygame.K_RETURN:
+                enemy.fire = False
+            if event.key == pygame.MOUSEBUTTONUP:  # fire to enemy
+                if event.button == 1:
+                    player.fire = False # fire to enemy
 
     pygame.display.update()
 

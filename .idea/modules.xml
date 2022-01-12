@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Final Fantasy VII.iml" filepath="$PROJECT_DIR$/.idea/Final Fantasy VII.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../.idea/MainPYGAMEFILES.iml" filepath="$PROJECT_DIR$/../.idea/MainPYGAMEFILES.iml" />
     </modules>
   </component>
 </project>
